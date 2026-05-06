@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0f1923">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Harajatlar</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Noto+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f14;
+    --surface: #111a23;
+    --surface2: #172030;
+    --border: #1e3045;
+    --accent: #00e5a0;
+    --accent2: #0091ff;
+    --accent3: #ff6b35;
+    --text: #e8f0fe;
+    --muted: #5a7a9a;
+    --danger: #ff4757;
+
+    --cat-transport: #0091ff;
+    --cat-food: #ff6b35;
+    --cat-shop: #a855f7;
+    --cat-health: #00e5a0;
+    --cat-fun: #ffd700;
+    --cat-other: #5a7a9a;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  body {
+    font-family: 'Noto Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BG pattern */
+  body::before {
+    content:'';
+    position:fixed;
+    inset:0;
+    background: 
+      radial-gradient(ellipse 80% 50% at 20% 0%, rgba(0,229,160,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 100%, rgba(0,145,255,0.07) 0%, transparent 60%);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  #app { position:relative; z-index:1; max-width:480px; margin:0 auto; padding:0 0 100px; }
+
+  /* HEADER */
+  .header {
+    padding: 20px 20px 16px;
+    position: sticky;
+    top: 0;
+    background: rgba(10,15,20,0.92);
+    backdrop-filter: blur(16px);
+    z-index: 100;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+  .app-title { font-family:'Space Mono', monospace; font-size:18px; color:var(--accent); letter-spacing:1px; }
+  .today-date { font-size:12px; color:var(--muted); font-family:'Space Mono', monospace; }
+  .today-total {
+    font-family:'Space Mono', monospace;
+    font-size:32px;
+    font-weight:700;
+    color:var(--text);
+    letter-spacing:-1px;
+  }
+  .today-total span { color:var(--accent); font-size:16px; font-weight:400; margin-left:4px; }
+
+  /* NAV */
+  .nav {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: rgba(17,26,35,0.97);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 200;
+  }
+  .nav-btn {
+    flex: 1;
+    padding: 14px 8px 10px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 10px;
+    font-family: 'Noto Sans', sans-serif;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.2s;
+  }
+  .nav-btn.active { color: var(--accent); }
+  .nav-btn svg { width:22px; height:22px; }
+
+  /* ADD BTN */
+  .add-fab {
+    position: fixed;
+    bottom: 72px;
+    right: calc(50% - 240px + 16px);
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    background: var(--accent);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(0,229,160,0.4);
+    z-index: 150;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .add-fab:active { transform: scale(0.93); box-shadow: 0 2px 10px rgba(0,229,160,0.3); }
+  .add-fab svg { width:28px; height:28px; color:#0a0f14; }
+
+  /* PAGES */
+  .page { display:none; padding: 16px; animation: fadeIn 0.2s ease; }
+  .page.active { display:block; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ENTRIES LIST */
+  .section-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 20px 0 10px;
+  }
+
+  .entry-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .entry-card::before {
+    content:'';
+    position:absolute;
+    left:0; top:0; bottom:0;
+    width:3px;
+    background: var(--cat-color);
+    border-radius:3px 0 0 3px;
+  }
+  .cat-icon {
+    width: 40px; height: 40px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .entry-info { flex: 1; min-width: 0; }
+  .entry-comment { font-size:14px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .entry-cat { font-size:11px; color:var(--muted); margin-top:2px; }
+  .entry-amount {
+    font-family: 'Space Mono', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent3);
+    white-space: nowrap;
+  }
+  .entry-delete {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px;
+    margin-left: 4px;
+  }
+  .entry-delete:active { color: var(--danger); }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .big { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 14px; line-height: 1.6; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 300;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    padding: 24px 20px 32px;
+    width: 100%;
+    max-width: 480px;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+  .modal-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 16px;
+    color: var(--accent);
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .input-group { margin-bottom: 14px; }
+  .input-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; display:block; }
+  .input-field {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 16px;
+    color: var(--text);
+    font-family: 'Noto Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-field:focus { border-color: var(--accent); }
+  .input-field::placeholder { color: var(--muted); }
+
+  /* Amount field */
+  .amount-wrap { position:relative; }
+  .amount-wrap .input-field { padding-right: 60px; font-family:'Space Mono', monospace; font-size:20px; }
+  .amount-currency {
+    position:absolute; right:16px; top:50%; transform:translateY(-50%);
+    font-size:13px; color:var(--muted); font-family:'Space Mono', monospace;
+  }
+
+  /* Category select */
+  .cat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .cat-option {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .cat-option.selected { border-color: var(--cat-color); background: rgba(255,255,255,0.05); }
+  .cat-option .icon { font-size:22px; display:block; margin-bottom:4px; }
+  .cat-option .name { font-size:11px; color:var(--muted); }
+  .cat-option.selected .name { color: var(--text); }
+
+  /* Date input */
+  .input-field[type="date"] { color-scheme: dark; }
+
+  .modal-actions { display:flex; gap:10px; margin-top:20px; }
+  .btn {
+    flex:1;
+    padding: 16px;
+    border-radius: 14px;
+    border: none;
+    font-size: 15px;
+    font-family: 'Noto Sans', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: #0a0f14; }
+  .btn-cancel { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+  /* STATS PAGE */
+  .month-selector {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  .month-nav {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px;
+    font-size: 20px;
+  }
+  .month-nav:active { color: var(--accent); }
+  .month-label { font-family:'Space Mono', monospace; font-size:14px; color:var(--text); }
+
+  .stats-total-card {
+    background: linear-gradient(135deg, rgba(0,229,160,0.12), rgba(0,145,255,0.08));
+    border: 1px solid rgba(0,229,160,0.2);
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .stats-total-label { font-size:12px; color:var(--muted); margin-bottom:6px; }
+  .stats-total-amount { font-family:'Space Mono', monospace; font-size:36px; font-weight:700; color:var(--accent); }
+  .stats-total-amount span { font-size:16px; color:var(--muted); }
+
+  .cat-stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+  }
+  .cat-stat-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .cat-stat-name { display:flex; align-items:center; gap:8px; font-size:14px; }
+  .cat-stat-amount { font-family:'Space Mono', monospace; font-size:14px; color:var(--accent3); }
+  .cat-stat-pct { font-size:11px; color:var(--muted); }
+  .bar-track { height:4px; background:var(--border); border-radius:4px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:4px; transition:width 0.6s ease; }
+
+  /* CALENDAR PAGE */
+  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:16px; }
+  .cal-day-label { text-align:center; font-size:10px; color:var(--muted); padding:6px 0; font-family:'Space Mono',monospace; }
+  .cal-day {
+    aspect-ratio:1;
+    border-radius:10px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .cal-day.empty { cursor:default; }
+  .cal-day.has-data { background:rgba(0,229,160,0.08); border-color:rgba(0,229,160,0.2); }
+  .cal-day.today { border-color:var(--accent); }
+  .cal-day.selected { background:var(--accent); }
+  .cal-day.selected .cal-dn { color:#0a0f14; }
+  .cal-dn { font-size:13px; font-family:'Space Mono',monospace; color:var(--text); }
+  .cal-dot { width:4px; height:4px; border-radius:50%; background:var(--accent); margin-top:2px; }
+  .cal-day.selected .cal-dot { background:#0a0f14; }
+
+  .selected-day-entries { margin-top:8px; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--accent);
+    color: #0a0f14;
+    padding: 10px 20px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 500;
+    opacity: 0;
+    transition: all 0.3s;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* Swipe to delete hint */
+  .hint { font-size:11px; color:var(--muted); text-align:center; padding: 8px 0 0; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="header">
+    <div class="header-top">
+      <div class="app-title">💰 HARAJAT</div>
+      <div class="today-date" id="headerDate"></div>
+    </div>
+    <div class="today-total" id="todayTotal">0 <span>so'm</span></div>
+  </div>
+
+  <!-- PAGES -->
+  <div class="page active" id="page-home">
+    <div class="section-title">BUGUNGI HARAJATLAR</div>
+    <div id="todayList"></div>
+  </div>
+
+  <div class="page" id="page-calendar">
+    <div class="section-title">KUNLIK KO'RINISH</div>
+    <div class="month-selector">
+      <button class="month-nav" onclick="calPrev()">‹</button>
+      <div class="month-label" id="calMonthLabel"></div>
+      <button class="month-nav" onclick="calNext()">›</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div id="selectedDayInfo"></div>
+  </div>
+
+  <div class="page" id="page-stats">
+    <div class="section-title">OYLIK STATISTIKA</div>
+    <div class="month-selector">
+      <button class="month-nav" onclick="statsPrev()">‹</button>
+      <div class="month-label" id="statsMonthLabel"></div>
+      <button class="month-nav" onclick="statsNext()">›</button>
+    </div>
+    <div class="stats-total-card">
+      <div class="stats-total-label">Jami sarflangan</div>
+      <div class="stats-total-amount" id="statsTotal">0 <span>so'm</span></div>
+    </div>
+    <div class="section-title">KATEGORIYALAR BO'YICHA</div>
+    <div id="catStats"></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="showPage('home',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    Bugun
+  </button>
+  <button class="nav-btn" onclick="showPage('calendar',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Kalendar
+  </button>
+  <button class="nav-btn" onclick="showPage('stats',this)">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Statistika
+  </button>
+</nav>
+
+<!-- FAB -->
+<button class="add-fab" onclick="openModal()">
+  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+</button>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">➕ HARAJAT QO'SHISH</div>
+
+    <div class="input-group">
+      <label class="input-label">Miqdor</label>
+      <div class="amount-wrap">
+        <input class="input-field" type="number" id="inputAmount" placeholder="0" inputmode="numeric">
+        <span class="amount-currency">so'm</span>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">Izoh</label>
+      <input class="input-field" type="text" id="inputComment" placeholder="Masalan: Avtobus chipta">
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">Kategoriya</label>
+      <div class="cat-grid" id="catGrid"></div>
+    </div>
+
+    <div class="input-group">
+      <label class="input-label">Sana</label>
+      <input class="input-field" type="date" id="inputDate">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeModal()">Bekor</button>
+      <button class="btn btn-primary" onclick="saveEntry()">Saqlash</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+const CATS = [
+  { id:'transport', name:'Transport', icon:'🚌', color:'var(--cat-transport)' },
+  { id:'food',      name:'Ovqat',     icon:'🍽️', color:'var(--cat-food)' },
+  { id:'shop',      name:"Do'kon",    icon:'🛒', color:'var(--cat-shop)' },
+  { id:'health',    name:"Sog'liq",   icon:'💊', color:'var(--cat-health)' },
+  { id:'fun',       name:'O\'yin-kulgi', icon:'🎮', color:'var(--cat-fun)' },
+  { id:'other',     name:'Boshqa',    icon:'📦', color:'var(--cat-other)' },
+];
+
+let data = JSON.parse(localStorage.getItem('harajat_v2') || '{}');
+let editId = null;
+let selectedCat = 'other';
+let calMonth, statsMonth;
+let calSelectedDate = null;
+
+const today = () => new Date().toISOString().split('T')[0];
+const fmtNum = n => Number(n).toLocaleString('uz-UZ');
+const months = ['Yanvar','Fevral','Mart','Aprel','May','Iyun','Iyul','Avgust','Sentabr','Oktabr','Noyabr','Dekabr'];
+const days7 = ['Du','Se','Ch','Pa','Ju','Sh','Ya'];
+
+function save() { localStorage.setItem('harajat_v2', JSON.stringify(data)); }
+
+function catById(id) { return CATS.find(c=>c.id===id) || CATS[5]; }
+
+// ---- INIT ----
+window.onload = function() {
+  const now = new Date();
+  calMonth = { y: now.getFullYear(), m: now.getMonth() };
+  statsMonth = { y: now.getFullYear(), m: now.getMonth() };
+  calSelectedDate = today();
+
+  document.getElementById('headerDate').textContent = formatDate(today());
+  renderHome();
+  renderCatGrid();
+  document.getElementById('inputDate').value = today();
+};
+
+function formatDate(d) {
+  const [y,mo,day] = d.split('-');
+  return `${day}-${months[parseInt(mo)-1]}-${y}`;
+}
+
+// ---- PAGES ----
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='calendar') renderCalendar();
+  if(name==='stats') renderStats();
+}
+
+// ---- HOME ----
+function renderHome() {
+  const t = today();
+  const entries = data[t] || [];
+  const total = entries.reduce((s,e)=>s+e.amount,0);
+  document.getElementById('todayTotal').innerHTML = `${fmtNum(total)} <span>so'm</span>`;
+
+  const list = document.getElementById('todayList');
+  if(entries.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="big">💸</div><p>Bugun hali harajat<br>kiritilmagan</p></div>`;
+    return;
+  }
+  list.innerHTML = entries.map((e,i) => entryCard(e,i,t)).join('') +
+    `<p class="hint">Tahrirlash uchun bosing</p>`;
+}
+
+function entryCard(e, i, date) {
+  const cat = catById(e.cat);
+  return `<div class="entry-card" style="--cat-color:${cat.color}" onclick="editEntry('${date}',${i})">
+    <div class="cat-icon">${cat.icon}</div>
+    <div class="entry-info">
+      <div class="entry-comment">${e.comment || '—'}</div>
+      <div class="entry-cat">${cat.name}</div>
+    </div>
+    <div class="entry-amount">${fmtNum(e.amount)}</div>
+    <button class="entry-delete" onclick="deleteEntry(event,'${date}',${i})">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+    </button>
+  </div>`;
+}
+
+// ---- MODAL ----
+function renderCatGrid() {
+  const grid = document.getElementById('catGrid');
+  grid.innerHTML = CATS.map(c => `
+    <div class="cat-option ${c.id===selectedCat?'selected':''}" style="--cat-color:${c.color}" onclick="selectCat('${c.id}')">
+      <span class="icon">${c.icon}</span>
+      <span class="name">${c.name}</span>
+    </div>`).join('');
+}
+
+function selectCat(id) {
+  selectedCat = id;
+  renderCatGrid();
+}
+
+function openModal(date) {
+  editId = null;
+  selectedCat = 'other';
+  document.getElementById('inputAmount').value = '';
+  document.getElementById('inputComment').value = '';
+  document.getElementById('inputDate').value = date || today();
+  document.getElementById('modalTitle').textContent = '➕ HARAJAT QO\'SHISH';
+  renderCatGrid();
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('inputAmount').focus(),300);
+}
+
+function editEntry(date, idx) {
+  const e = data[date][idx];
+  editId = {date, idx};
+  selectedCat = e.cat || 'other';
+  document.getElementById('inputAmount').value = e.amount;
+  document.getElementById('inputComment').value = e.comment;
+  document.getElementById('inputDate').value = date;
+  document.getElementById('modalTitle').textContent = '✏️ HARAJATNI TAHRIRLASH';
+  renderCatGrid();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function closeModalOutside(e) {
+  if(e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function saveEntry() {
+  const amt = parseFloat(document.getElementById('inputAmount').value);
+  const comment = document.getElementById('inputComment').value.trim();
+  const date = document.getElementById('inputDate').value;
+
+  if(!amt || amt <= 0) { showToast('⚠️ Miqdor kiriting!'); return; }
+  if(!comment) { showToast('⚠️ Izoh kiriting!'); return; }
+  if(!date) { showToast('⚠️ Sana tanlang!'); return; }
+
+  if(!data[date]) data[date] = [];
+
+  const entry = { amount: amt, comment, cat: selectedCat };
+
+  if(editId && editId.date === date) {
+    data[editId.date][editId.idx] = entry;
+  } else if(editId) {
+    // date changed
+    data[editId.date].splice(editId.idx, 1);
+    if(data[editId.date].length === 0) delete data[editId.date];
+    data[date].push(entry);
+  } else {
+    data[date].push(entry);
+  }
+
+  save();
+  closeModal();
+  renderHome();
+  showToast('✅ Saqlandi!');
+}
+
+function deleteEntry(ev, date, idx) {
+  ev.stopPropagation();
+  data[date].splice(idx,1);
+  if(data[date].length===0) delete data[date];
+  save();
+  renderHome();
+  if(calSelectedDate === date) renderCalendar();
+  showToast('🗑️ O\'chirildi');
+}
+
+// ---- CALENDAR ----
+function renderCalendar() {
+  const {y,m} = calMonth;
+  document.getElementById('calMonthLabel').textContent = `${months[m]} ${y}`;
+  const grid = document.getElementById('calGrid');
+
+  // Day labels (Mon first)
+  let html = days7.map(d=>`<div class="cal-day-label">${d}</div>`).join('');
+
+  const firstDay = new Date(y,m,1).getDay(); // 0=Sun
+  const startOffset = (firstDay === 0) ? 6 : firstDay - 1;
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  const t = today();
+
+  for(let i=0;i<startOffset;i++) html += `<div class="cal-day empty"></div>`;
+
+  for(let d=1;d<=daysInMonth;d++) {
+    const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const hasData = !!(data[dateStr] && data[dateStr].length);
+    const isToday = dateStr===t;
+    const isSel = dateStr===calSelectedDate;
+    html += `<div class="cal-day ${hasData?'has-data':''} ${isToday?'today':''} ${isSel?'selected':''}"
+      onclick="selectCalDay('${dateStr}')">
+      <span class="cal-dn">${d}</span>
+      ${hasData?'<span class="cal-dot"></span>':''}
+    </div>`;
+  }
+  grid.innerHTML = html;
+  renderSelectedDay();
+}
+
+function selectCalDay(date) {
+  calSelectedDate = date;
+  renderCalendar();
+}
+
+function renderSelectedDay() {
+  const info = document.getElementById('selectedDayInfo');
+  if(!calSelectedDate) { info.innerHTML=''; return; }
+  const entries = data[calSelectedDate] || [];
+  const total = entries.reduce((s,e)=>s+e.amount,0);
+
+  let html = `<div class="section-title">${formatDate(calSelectedDate)} — ${fmtNum(total)} so'm</div>`;
+  if(entries.length===0) {
+    html += `<p style="color:var(--muted);font-size:13px;padding:10px 0">Bu kunda harajat yo'q</p>`;
+  } else {
+    html += entries.map((e,i)=>entryCard(e,i,calSelectedDate)).join('');
+  }
+  html += `<button class="btn btn-primary" style="margin-top:12px;width:100%" onclick="openModal('${calSelectedDate}')">+ Harajat qo'shish</button>`;
+  info.innerHTML = html;
+}
+
+function calPrev() {
+  calMonth.m--;
+  if(calMonth.m<0){calMonth.m=11;calMonth.y--;}
+  renderCalendar();
+}
+function calNext() {
+  calMonth.m++;
+  if(calMonth.m>11){calMonth.m=0;calMonth.y++;}
+  renderCalendar();
+}
+
+// ---- STATS ----
+function renderStats() {
+  const {y,m} = statsMonth;
+  document.getElementById('statsMonthLabel').textContent = `${months[m]} ${y}`;
+
+  const prefix = `${y}-${String(m+1).padStart(2,'0')}-`;
+  const monthEntries = Object.entries(data)
+    .filter(([k])=>k.startsWith(prefix))
+    .flatMap(([,v])=>v);
+
+  const total = monthEntries.reduce((s,e)=>s+e.amount,0);
+  document.getElementById('statsTotal').innerHTML = `${fmtNum(total)} <span>so'm</span>`;
+
+  const byCat = {};
+  monthEntries.forEach(e=>{
+    byCat[e.cat] = (byCat[e.cat]||0) + e.amount;
+  });
+
+  const sorted = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  const container = document.getElementById('catStats');
+
+  if(sorted.length===0) {
+    container.innerHTML=`<p style="color:var(--muted);font-size:13px;text-align:center;padding:30px">Bu oyda harajat yo'q</p>`;
+    return;
+  }
+
+  container.innerHTML = sorted.map(([catId, amt])=>{
+    const cat = catById(catId);
+    const pct = total>0 ? Math.round(amt/total*100) : 0;
+    return `<div class="cat-stat">
+      <div class="cat-stat-top">
+        <div class="cat-stat-name">
+          <span>${cat.icon}</span>
+          <span>${cat.name}</span>
+        </div>
+        <div>
+          <span class="cat-stat-amount">${fmtNum(amt)}</span>
+          <span class="cat-stat-pct"> ${pct}%</span>
+        </div>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${pct}%;background:${cat.color}"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function statsPrev() {
+  statsMonth.m--;
+  if(statsMonth.m<0){statsMonth.m=11;statsMonth.y--;}
+  renderStats();
+}
+function statsNext() {
+  statsMonth.m++;
+  if(statsMonth.m>11){statsMonth.m=0;statsMonth.y++;}
+  renderStats();
+}
+
+// ---- TOAST ----
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+</script>
+</body>
+</html>
